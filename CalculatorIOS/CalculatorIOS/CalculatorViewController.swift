@@ -23,6 +23,8 @@ class CalculatorViewController: UIViewController {
         return label
     }()
     
+    var currentDisplayValue: String?
+    
     private let buttonTitles: [[String]] = [
         ["AC", "+/-", "%", "+"],
         ["7", "8", "9", "X"],
@@ -45,26 +47,9 @@ class CalculatorViewController: UIViewController {
         
         mainStack.addArrangedSubview(displayLabel)
         
-//        for row in buttonTitles {
-//            let rowStack = UIStackView()
-//            rowStack.axis = .horizontal
-//            rowStack.spacing = 10
-//            rowStack.distribution = .fillEqually
-
-//            for title in row {
-//                let button = UIButton(type: .system)
-//                button.setTitle(title, for: .normal)
-//                button.titleLabel?.font = UIFont.systemFont(ofSize: 24)
-//                button.setTitleColor(.white, for: .normal)
-//                button.backgroundColor = .systemGray
-//                button.layer.cornerRadius = 10
-//                rowStack.addArrangedSubview(button)
-//
-//            }
-
-            for row in buttonTitles {
-                mainStack.addArrangedSubview(createButtonRow(with: row))
-            }
+        for row in buttonTitles {
+            mainStack.addArrangedSubview(createButtonRow(with: row))
+        }
         
         view.addSubview(mainStack)
         
@@ -98,6 +83,21 @@ class CalculatorViewController: UIViewController {
         button.layer.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }
+    @objc private func buttonTapped(){
+        
+    }
+    
+    func handleNumericImput(){
+        
+        func resetDisplay(){
+            currentDisplayValue = "0"
+            updateDisplay()
+        }
+        
+        func updateDisplay() {
+            displayLabel.text = currentDisplayValue
+        }
     }
 }
 
