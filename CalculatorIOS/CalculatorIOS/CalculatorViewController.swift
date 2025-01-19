@@ -9,10 +9,12 @@ import UIKit
 
 class CalculatorViewController: UIViewController {
     
+    // MARK: - UI Elements
+    
     private let displayLabel: UILabel = {
         let label = UILabel()
         label.text = "0"
-        label.font = UIFont.systemFont(ofSize: 40)
+        label.font = UIFont.systemFont(ofSize: 40, weight: .light)
         label.textAlignment = .right
         label.textColor = .white
         label.backgroundColor = .black
@@ -23,22 +25,25 @@ class CalculatorViewController: UIViewController {
         return label
     }()
     
-    var currentDisplayValue: String?
-    
     private let buttonTitles: [[String]] = [
-        ["AC", "+/-", "%", "+"],
+        ["AC", "+/-", "%", "÷"],
         ["7", "8", "9", "X"],
         ["4", "5", "6", "-"],
         ["1", "2", "3", "+"],
         ["0", ".", "="]
     ]
     
+    private var currentDisplayValue: String = "0"
+    private var previousValue: Double = 0
+    private var currentOperator: String?
+    private var isPerformingOperation = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupLayout()
     }
     
+    // MARK: - Layout setup
     private func setupLayout(){
         let mainStack = UIStackView()
         mainStack.axis = .vertical
@@ -61,6 +66,7 @@ class CalculatorViewController: UIViewController {
         ])
     }
     
+    // MARK: - Helper Methods
     private func createButtonRow(with titles: [String]) -> UIStackView {
         let rowStack = UIStackView()
         rowStack.axis = .horizontal
@@ -82,24 +88,114 @@ class CalculatorViewController: UIViewController {
         button.backgroundColor = title.isNumber ? .darkGray : .orange
         button.layer.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Adicionando um target para o botao da calculadora
+        
+        button.addTarget(self, action: #selector(buttonTapped(_:)), for: .touchUpInside)
+        
         return button
     }
-    @objc private func buttonTapped(){
+    
+    // MARK: - Actions
+    @objc private func buttonTapped(_ sender: UIButton){
+        guard let title = sender.currentTitle else { return }
         
+        //Handle numeric input
+        
+        if title.isNumber || title == "." {
+            handleNumericInput(title)
+        } else if ["+", "-", "X", "÷"].contains(title) {
+            handleOperatorInput(title)
+        } else if title == "=" {
+            handleEqualsInput()
+        } else if title == "AC" {
+            resetDisplay()
+        } else if title == "+/-" {
+            toggleSign()
+        } else if title == "%" {
+            calculatePercentage()
+        }
     }
     
-    func handleNumericImput(){
+    
+    // MARK: - Logic Methods
+    
+    func handleNumericInput(_ input: String) {
         
-        func resetDisplay(){
-            currentDisplayValue = "0"
-            updateDisplay()
+        if isPerformingOperation{
+            currentDisplayValue = input == "." ? "0." : input
+            isPerformingOperation = false
+        } else {
+            if input == "." && currentDisplayValue.contains(".") { return }
+            currentDisplayValue = currentDisplayValue == "0" ? input : currentDisplayValue + input
         }
-        
-        func updateDisplay() {
-            displayLabel.text = currentDisplayValue
+        updateDisplay()
+    }
+    
+    
+    func handleOperatorInput(_ operatorSymbol: String) {
+        if let value = Double(currentDisplayValue) {
+            previousValue = value
+            currentOperator = operatorSymbol
+            isPerformingOperation = true
         }
     }
+    
+    func handleEqualsInput(){
+        guard let operatorSymbol = currentOperator, let value = Double(currentDisplayValue) else { return }
+        var result: Double = 0
+        
+        switch operatorSymbol {
+        case "+":
+            result = previousValue + value
+        case "-":
+            result = previousValue - value
+        case "X":
+            result = previousValue * value
+        case "÷":
+            result = value == 0 ? 0 : previousValue / value
+        default:
+            break
+        }
+        
+        currentDisplayValue = formatResult(result)
+        previousValue = result
+        currentOperator = nil
+        updateDisplay()
+    }
+    
+    func toggleSign() {
+        if let value = Double(currentDisplayValue) {
+            currentDisplayValue = formatResult(value * -1)
+            updateDisplay()
+        }
+    }
+    
+    func calculatePercentage() {
+        if let value = Double(currentDisplayValue) {
+            currentDisplayValue = formatResult(value / 100)
+            updateDisplay()
+        }
+    }
+    
+    func resetDisplay() {
+        currentDisplayValue = "0"
+        previousValue = 0
+        currentOperator = nil
+        isPerformingOperation = false
+        updateDisplay()
+    }
+    
+    func updateDisplay() {
+        displayLabel.text = currentDisplayValue
+    }
+    
+    func formatResult (_ value: Double) -> String {
+        return floor(value) == value ? "\(Int(value))" : "\(value)"
+    }
 }
+
+//MARK: - Extensions
 
 private extension String {
     var isNumber: Bool {
